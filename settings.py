@@ -2,6 +2,9 @@ import math
 import glm
 import pygame as pg
 from texture_id import ID
+import RPi.GPIO as GPIO
+import time
+from mpu9250 import MPU9250
 
 # opengl
 MAJOR_VERSION = 3
@@ -11,6 +14,14 @@ DEPTH_SIZE =24
 # resolution
 WIN_RES = glm.vec2(1280, 720)
 # WIN_RES = glm.vec2(1600, 900)
+
+# button pins
+SHOOT_PIN = 14
+DOOR_PIN = 0 #TODO: REPLACE
+TOGGLE_PIN = 0 #TODO: REPLACE
+
+#mpu thing
+mpu = MPU9250()
 
 # control keys
 KEYS = {

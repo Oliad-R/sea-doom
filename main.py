@@ -38,19 +38,31 @@ class Game:
         self.sound_event = pg.USEREVENT + 1
         pg.time.set_timer(self.sound_event, 750)
 
+        #GPIO Init Code
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(SHOOT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        #GPIO.setup(2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        #GPIO.setup(3, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+
     def update(self):
         self.engine.update()
         #
-        self.delta_time = self.clock.tick()
+        self.delta_time = self.clock.tick(60)
         self.time = pg.time.get_ticks() * 0.001
         self.fps_value = int(self.clock.get_fps())
         pg.display.set_caption(f'{self.fps_value}')
+
+        #TESTING VALUES ONLY
+        #print("PIN", SHOOT_PIN, ":", GPIO.input(SHOOT_PIN))
+        #print("PIN", 2, ":",GPIO.input(2))
+        #print("PIN", 3, ":",GPIO.input(3))
+        #print(mpu.get_sensor_data())
 
     def render(self):
         self.ctx.clear(color=BG_COLOR)
         self.engine.render()
         pg.display.flip()
-
     def handle_events(self):
         self.anim_trigger, self.sound_trigger = False, False
     
