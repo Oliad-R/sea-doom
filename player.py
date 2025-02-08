@@ -84,26 +84,26 @@ class Player(Camera):
                 self.switch_weapon(weapon_id=ID.RIFLE_0)
 
         if GPIO.input(TOGGLE_PIN) != self.prev_toggle_value:
-            if GPIO.input(TOGGLE_PIN) == 0 and (time.time() - self.prev_toggle_time) >= 0.05:
+            if GPIO.input(TOGGLE_PIN) == 0 and (time.time() - self.prev_toggle_time) >= 0.1:
                 if self.toggle_index == 0:
-                    self.switch_weapon(weapon_id=ID.KNIFE_0)
-                elif self.toggle_index == 1:
                     if self.weapons[ID.PISTOL_0]==1:
+                        self.toggle_index += 1
                         self.switch_weapon(weapon_id=ID.PISTOL_0)
-                    else:
-                        self.toggle_index = -1
-                        self.switch_weapon(weapon_id=ID.KNIFE_0)
-                elif self.toggle_index == 2:
-                    if self.weapons[ID.PISTOL_0]==1:
+
+                elif self.toggle_index == 1:
+                    if self.weapons[ID.RIFLE_0]==1:
+                        self.toggle_index += 1
                         self.switch_weapon(weapon_id=ID.RIFLE_0)
                     else:
-                        self.toggle_index = -1
+                        self.toggle_index -= 1
                         self.switch_weapon(weapon_id=ID.KNIFE_0)
+                elif self.toggle_index == 2:
+                    self.toggle_index = 0 
+                    self.switch_weapon(weapon_id=ID.KNIFE_0)
                     
-            self.toggle_index = (self.toggle_index + 1) % 3
             self.prev_toggle_value = GPIO.input(TOGGLE_PIN)
             self.prev_toggle_time = time.time()
-            print(self.toggle_index)
+            print("TOGGLE INDEX:", self.toggle_index)
 
 
         # weapon by mouse wheel
@@ -288,6 +288,8 @@ class Player(Camera):
             self.rotate_pitch(delta_y=mouse_dy * MOUSE_SENSITIVITY)
 
     def keyboard_control(self):
+        r, p, y = mpu.get_sensor_data()
+        #print("roll: ", r, p, y)
         key_state = pg.key.get_pressed()
         vel = PLAYER_SPEED * self.app.delta_time
         next_step = glm.vec2()
@@ -306,6 +308,12 @@ class Player(Camera):
             next_step += self.move_right(vel)
         if key_state[KEYS['STRAFE_L']]:
             next_step += self.move_left(vel)
+        scale_r = 0.0012
+        #print(r * scale_r, vel)
+        if r > 20:
+            next_step += self.move_left(min( vel, r * scale_r))
+        elif r < -20:
+            next_step += self.move_right(min(vel, -r * scale_r))
         self.move(next_step=next_step)
 
     def keyboard_control2(self):
