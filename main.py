@@ -42,8 +42,10 @@ class Game:
         #GPIO Init Code
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(SHOOT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        #GPIO.setup(2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        #GPIO.setup(3, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(DOOR_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(TOGGLE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(FORWARD_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(BACKWARD_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 
     def update(self):
@@ -56,8 +58,8 @@ class Game:
 
         #TESTING VALUES ONLY
         #print("PIN", SHOOT_PIN, ":", GPIO.input(SHOOT_PIN))
-        #print("PIN", 2, ":",GPIO.input(2))
-        #print("PIN", 3, ":",GPIO.input(3))
+        #print("PIN", DOOR_PIN, ":",GPIO.input(DOOR_PIN))
+        #print("PIN", TOGGLE_PIN, ":",GPIO.input(TOGGLE_PIN))
         #print(mpu.get_sensor_data())
 
     def render(self):

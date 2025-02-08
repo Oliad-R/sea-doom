@@ -53,10 +53,11 @@ class Player(Camera):
         self.key = None
 
         #new variables
-        self.prev_shot_value = 0 
-        self.prev_shot_time = 0 
+        self.prev_shot_value = 1
+        self.prev_shot_time = 0
 
         self.toggle_index = 0
+        self.prev_toggle_value = 1
         self.prev_toggle_time = 0
         self.roll, self.pitch, self.yaw = mpu.get_sensor_data()
 
@@ -67,8 +68,8 @@ class Player(Camera):
 
     def handle_events(self, event):
         # door interaction
-        #if GPIO.input(DOOR_PIN) == 0:
-        #    self.interact_with_door()
+        if GPIO.input(DOOR_PIN) == 0:
+            self.interact_with_door()
 
         if event.type == pg.KEYDOWN:
             if event.key == KEYS['INTERACT']:
@@ -82,15 +83,28 @@ class Player(Camera):
             elif event.key == KEYS['WEAPON_3']:
                 self.switch_weapon(weapon_id=ID.RIFLE_0)
 
-        #if GPIO.input(TOGGLE_PIN) == 0 and (time.time() - self.prev_toggle_time) >= 1.0:
-        #    if self.toggle_index == 0:
-        #        self.switch_weapon(weapon_id=ID.KNIFE_0)
-        #    elif self.toggle_index == 1:
-        #        self.switch_weapon(weapon_id=ID.PISTOL_0)
-        #    elif self.toggle_index == 2:
-        #        self.switch_weapon(weapon_id=ID.RIFLE_0)
-                
-        #    self.toggle_index = (self.toggle_index + 1) % 3
+        if GPIO.input(TOGGLE_PIN) != self.prev_toggle_value:
+            if GPIO.input(TOGGLE_PIN) == 0 and (time.time() - self.prev_toggle_time) >= 0.05:
+                if self.toggle_index == 0:
+                    self.switch_weapon(weapon_id=ID.KNIFE_0)
+                elif self.toggle_index == 1:
+                    if self.weapons[ID.PISTOL_0]==1:
+                        self.switch_weapon(weapon_id=ID.PISTOL_0)
+                    else:
+                        self.toggle_index = -1
+                        self.switch_weapon(weapon_id=ID.KNIFE_0)
+                elif self.toggle_index == 2:
+                    if self.weapons[ID.PISTOL_0]==1:
+                        self.switch_weapon(weapon_id=ID.RIFLE_0)
+                    else:
+                        self.toggle_index = -1
+                        self.switch_weapon(weapon_id=ID.KNIFE_0)
+                    
+            self.toggle_index = (self.toggle_index + 1) % 3
+            self.prev_toggle_value = GPIO.input(TOGGLE_PIN)
+            self.prev_toggle_time = time.time()
+            print(self.toggle_index)
+
 
         # weapon by mouse wheel
         if event.type == pg.MOUSEWHEEL:
@@ -162,7 +176,7 @@ class Player(Camera):
         self.prev_roll = self.roll
 
         # Debug Output (Optional)
-        print(f"Roll: {self.roll:.2f}, Pitch: {self.pitch:.2f}, Yaw: {self.yaw:.2f}")
+        #print(f"Roll: {self.roll:.2f}, Pitch: {self.pitch:.2f}, Yaw: {self.yaw:.2f}")
 
 
     def check_health(self):
@@ -274,6 +288,27 @@ class Player(Camera):
             self.rotate_pitch(delta_y=mouse_dy * MOUSE_SENSITIVITY)
 
     def keyboard_control(self):
+        key_state = pg.key.get_pressed()
+        vel = PLAYER_SPEED * self.app.delta_time
+        next_step = glm.vec2()
+        #
+
+        if GPIO.input(FORWARD_PIN) == 0:
+            next_step += self.move_forward(vel)
+        if GPIO.input(BACKWARD_PIN) == 0:
+            next_step += self.move_back(vel)
+
+        if key_state[KEYS['FORWARD']]:
+            next_step += self.move_forward(vel)
+        if key_state[KEYS['BACK']]:
+            next_step += self.move_back(vel)
+        if key_state[KEYS['STRAFE_R']]:
+            next_step += self.move_right(vel)
+        if key_state[KEYS['STRAFE_L']]:
+            next_step += self.move_left(vel)
+        self.move(next_step=next_step)
+
+    def keyboard_control2(self):
         ax, ay, az = mpu.get_accel_data()
         #print(ax, ay, az)
         #key_state = pg.key.get_pressed()

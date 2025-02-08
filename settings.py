@@ -12,13 +12,15 @@ MINOR_VERSION = 3
 DEPTH_SIZE =24
 
 # resolution
-WIN_RES = glm.vec2(1280, 720)
+WIN_RES = glm.vec2(800, 500)
 # WIN_RES = glm.vec2(1600, 900)
 
 # button pins
-SHOOT_PIN = 14
-DOOR_PIN = 0 #TODO: REPLACE
-TOGGLE_PIN = 0 #TODO: REPLACE
+SHOOT_PIN = 15
+DOOR_PIN = 14
+TOGGLE_PIN = 27
+FORWARD_PIN = 4
+BACKWARD_PIN = 17
 
 #mpu thing
 mpu = MPU9250()
