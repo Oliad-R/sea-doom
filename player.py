@@ -2,6 +2,12 @@ from itertools import cycle
 from camera import Camera
 from settings import *
 import random
+import math
+
+def g(x):
+    B = 30
+    T = 0.1
+    return x*min(1, 1/(1 + math.exp(-1*B*(math.fabs(x) - T))))
 
 
 class PlayerAttribs:
@@ -12,6 +18,7 @@ class PlayerAttribs:
         self.weapon_id = ID.KNIFE_0
         self.num_level = 0
 
+
     def update(self, player):
         self.health = player.health
         self.ammo = player.ammo
@@ -20,12 +27,12 @@ class PlayerAttribs:
 
 
 class Player(Camera):
-    def __init__(self, eng, position=PLAYER_POS, yaw=0, pitch=0):
+    def __init__(self, eng, position=PLAYER_POS, yaw=0, pitch=0, roll=0):
         self.app = eng.app
         self.eng = eng
         self.sound = eng.sound
         self.play = eng.sound.play
-        super().__init__(position, yaw, pitch)
+        super().__init__(position, yaw, pitch, roll)
 
         # these maps will update when instantiated LevelMap
         self.door_map, self.wall_map, self.item_map = None, None, None
@@ -45,9 +52,25 @@ class Player(Camera):
         #
         self.key = None
 
+        #new variables
+        self.prev_shot_value = 0 
+        self.prev_shot_time = 0 
+
+        self.toggle_index = 0
+        self.prev_toggle_time = 0
+        self.roll, self.pitch, self.yaw = mpu.get_sensor_data()
+
+        self.prev_pitch = 0 
+        self.prev_roll = 0
+        self.prev_yaw = 0
+
+
     def handle_events(self, event):
+        # door interaction
+        #if GPIO.input(DOOR_PIN) == 0:
+        #    self.interact_with_door()
+
         if event.type == pg.KEYDOWN:
-            # door interaction
             if event.key == KEYS['INTERACT']:
                 self.interact_with_door()
 
@@ -59,6 +82,16 @@ class Player(Camera):
             elif event.key == KEYS['WEAPON_3']:
                 self.switch_weapon(weapon_id=ID.RIFLE_0)
 
+        #if GPIO.input(TOGGLE_PIN) == 0 and (time.time() - self.prev_toggle_time) >= 1.0:
+        #    if self.toggle_index == 0:
+        #        self.switch_weapon(weapon_id=ID.KNIFE_0)
+        #    elif self.toggle_index == 1:
+        #        self.switch_weapon(weapon_id=ID.PISTOL_0)
+        #    elif self.toggle_index == 2:
+        #        self.switch_weapon(weapon_id=ID.RIFLE_0)
+                
+        #    self.toggle_index = (self.toggle_index + 1) % 3
+
         # weapon by mouse wheel
         if event.type == pg.MOUSEWHEEL:
             weapon_id = next(self.weapon_cycle)
@@ -69,15 +102,68 @@ class Player(Camera):
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.do_shot()
+    
+        if GPIO.input(SHOOT_PIN) != self.prev_shot_value:
+            if GPIO.input(SHOOT_PIN) == 0 and (time.time() - self.prev_shot_time) >= 0.1:
+                self.do_shot()
+                self.prev_shot = time.time()
+
+            self.prev_shot_value = GPIO.input(SHOOT_PIN)
 
     def update(self):
         self.mouse_control()
         self.keyboard_control()
         super().update()
-        #
+
+        # Player state updates
         self.check_health()
         self.update_tile_position()
         self.pick_up_item()
+
+        # Get latest sensor readings
+        roll, pitch, yaw = mpu.get_sensor_data()
+
+        # Smoothing and Scaling
+        alpha = 0.25  # Smoothing factor (lower = more stable, higher = more responsive)
+        scale = 0.02  # Adjusted scaling for realistic motion tracking
+
+        # Invert and scale sensor values for game compatibility
+        yaw *= -scale
+        roll *= -scale
+        pitch *= scale
+
+        # Compute delta changes to avoid drift
+        delta_yaw = - self.prev_yaw + yaw
+        delta_roll = - self.prev_roll + roll
+        delta_pitch = - self.prev_pitch + pitch
+
+        # Apply a dead zone to ignore small, insignificant changes (reduces drift)
+        #dead_zone = 0.1  
+        #if abs(delta_yaw) < dead_zone: delta_yaw = 0
+        #if abs(delta_roll) < dead_zone: delta_roll = 0
+        #if abs(delta_pitch) < dead_zone: delta_pitch = 0
+        delta_yaw = g(delta_yaw)
+        delta_roll = g(delta_roll)
+        delta_pitch = g(delta_pitch)
+
+        # Apply smoothing filter
+        roll0 = self.prev_roll + (alpha * delta_roll)
+        pitch0 = self.prev_pitch + (alpha * delta_pitch)
+        yaw0 = self.prev_yaw + (alpha * delta_yaw)
+
+        # Update player orientation
+        self.yaw = yaw0
+        self.pitch = pitch0
+        self.roll = roll0
+
+        # Store previous values for the next update
+        self.prev_pitch = self.pitch
+        self.prev_yaw = self.yaw
+        self.prev_roll = self.roll
+
+        # Debug Output (Optional)
+        print(f"Roll: {self.roll:.2f}, Pitch: {self.pitch:.2f}, Yaw: {self.yaw:.2f}")
+
 
     def check_health(self):
         if self.health <= 0:
@@ -188,25 +274,26 @@ class Player(Camera):
             self.rotate_pitch(delta_y=mouse_dy * MOUSE_SENSITIVITY)
 
     def keyboard_control(self):
-        key_state = pg.key.get_pressed()
-        vel = PLAYER_SPEED * self.app.delta_time
-        next_step = glm.vec2()
-        #
-        if key_state[KEYS['FORWARD']]:
-            next_step += self.move_forward(vel)
-        if key_state[KEYS['BACK']]:
-            next_step += self.move_back(vel)
-        if key_state[KEYS['STRAFE_R']]:
-            next_step += self.move_right(vel)
-        if key_state[KEYS['STRAFE_L']]:
-            next_step += self.move_left(vel)
-        # roll camera
-        if key_state[KEYS['ROLL_L']]:  
-            self.rotate_roll(-0.002)
-        if key_state[KEYS['ROLL_R']]:  
-            self.rotate_roll(0.002)
+        ax, ay, az = mpu.get_accel_data()
+        #print(ax, ay, az)
+        #key_state = pg.key.get_pressed()
+        vel = (PLAYER_SPEED) * self.app.delta_time
 
-        self.move(next_step=next_step)
+        next_step = glm.vec2()
+        #if key_state[KEYS['FORWARD']]:
+        scale = 0.01
+        if ax > 0:
+            next_step += self.move_forward(vel*ax*scale)
+        #if key_state[KEYS['BACK']]:
+        else:
+            next_step += self.move_back(vel*-1*ax*scale)
+        if ay > 0:
+        #if key_state[KEYS['STRAFE_R']]:
+            next_step += self.move_right(vel*ay*scale)
+        #if key_state[KEYS['STRAFE_L']]:
+        else:
+            next_step += self.move_left(vel*-1*ay*scale)
+        #
 
     def move(self, next_step):
         if not self.is_collide(dx=next_step[0]):
@@ -229,3 +316,4 @@ class Player(Camera):
             return self.door_map[int_pos].is_closed
         # check walls
         return int_pos in self.wall_map
+    
