@@ -3,7 +3,7 @@ import moderngl as mgl
 from engine import Engine
 from settings import *
 
-
+     
 class Game:
     def __init__(self):
         pg.init()
@@ -53,7 +53,7 @@ class Game:
 
     def handle_events(self):
         self.anim_trigger, self.sound_trigger = False, False
-
+    
         for event in pg.event.get():
             if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 self.is_running = False
