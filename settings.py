@@ -5,7 +5,7 @@ from texture_id import ID
 
 # opengl
 MAJOR_VERSION = 3
-MINOR_VERSION = 3
+MINOR_VERSION = 3   
 DEPTH_SIZE =24
 
 # resolution
@@ -15,15 +15,17 @@ WIN_RES = glm.vec2(1280, 720)
 # control keys
 KEYS = {
     'FORWARD': pg.K_w,
-    'BACK': pg.K_s,
-    'UP': pg.K_q,
-    'DOWN': pg.K_e,
+    'BACK': pg.K_s, 
+    'ROLL_L': pg.K_q,
+    'ROLL_R': pg.K_e,
     'STRAFE_L': pg.K_a,
     'STRAFE_R': pg.K_d,
     'INTERACT': pg.K_f,
     'WEAPON_1': pg.K_1,
     'WEAPON_2': pg.K_2,
     'WEAPON_3': pg.K_3,
+    'UP': pg.K_z,
+    'DOWN': pg.K_x,
 }
 
 # camera

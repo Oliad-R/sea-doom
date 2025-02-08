@@ -200,7 +200,12 @@ class Player(Camera):
             next_step += self.move_right(vel)
         if key_state[KEYS['STRAFE_L']]:
             next_step += self.move_left(vel)
-        #
+        # roll camera
+        if key_state[KEYS['ROLL_L']]:  
+            self.rotate_roll(-0.002)
+        if key_state[KEYS['ROLL_R']]:  
+            self.rotate_roll(0.002)
+
         self.move(next_step=next_step)
 
     def move(self, next_step):
