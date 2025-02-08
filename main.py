@@ -19,6 +19,7 @@ class Game:
         self.ctx.gc_mode = 'auto'
 
         self.clock = pg.time.Clock()
+        self.target_fps = 60
         self.delta_time = 0
         self.time = 0
 
@@ -41,7 +42,7 @@ class Game:
     def update(self):
         self.engine.update()
         #
-        self.delta_time = self.clock.tick()
+        self.delta_time = self.clock.tick(60)
         self.time = pg.time.get_ticks() * 0.001
         self.fps_value = int(self.clock.get_fps())
         pg.display.set_caption(f'{self.fps_value}')
