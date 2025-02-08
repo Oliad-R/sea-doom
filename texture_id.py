@@ -3,7 +3,7 @@ from enum import IntEnum
 
 class ID(IntEnum):  # texture IDs
     # walls and flats
-    WALL_STONE_WHITE = 0
+    WALL_STONE_WHITE = 0 
     WALL_STONE_BLUE = 1
     WALL_BRICK = 2
     WALL_WOOD = 3
