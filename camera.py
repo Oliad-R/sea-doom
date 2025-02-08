@@ -44,6 +44,9 @@ class Camera:
         self.roll += delta_roll
         #self.roll = glm.clamp(self.roll, glm.radians(-90), glm.radians(90))
 
+    def set_yaw(self, yaw):
+        self.yaw = yaw
+
     def move_left(self, velocity):
         return -self.right.xz * velocity
 

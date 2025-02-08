@@ -101,3 +101,14 @@ class ID(IntEnum):  # texture IDs
     RAT_9 = 76  # death
     RAT_10 = 77  # death
     RAT_11 = 78  # death
+
+
+# class ID(IntEnum):  # texture IDs
+#     # walls and flats
+#     FLOOR = 0
+#     WALL_LIGHT = 1
+#     WALL = 2
+#     WALL_WINDOW = 3
+#     NPC = 4
+#     PISTOL = 5
+#     AMMO = 6
